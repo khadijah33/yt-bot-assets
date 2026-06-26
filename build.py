@@ -6,7 +6,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 W, H, FPS = 1080, 1920, 1 # 1 fps is fine for slides
 DURATION = 600 # 10 minutes = 600 seconds
-SECONDS_PER_SLIDE = 10
+SECONDS_PER_SLIDE = 1
 
 img = Image.new('RGB', (W, H), color=(0,0,0))
 draw = ImageDraw.Draw(img)
