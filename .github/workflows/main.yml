@@ -1,5 +1,7 @@
 name: Build Daily Video
 on:
+  schedule:
+    - cron: "0 7 * *"   # 5 fields. 7am UTC = 9am Lagos. Must be quoted.
   workflow_dispatch:
 jobs:
   build:
@@ -7,13 +9,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+        with: {python-version: '3.11'}
       - name: Install ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
       - run: pip install pillow
       - run: python build.py
       - uses: actions/upload-artifact@v4
-        with:
-          name: daily-video
-          path: out/*.mp4
+        with: {name: daily-video, path: out/*.mp4}
