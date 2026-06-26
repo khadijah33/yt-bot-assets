@@ -1,13 +1,24 @@
 name: Build Daily Video
-on: {schedule: [{cron: '0 7 *'}], workflow_dispatch:}
+on:
+  schedule: [{cron: '0 7 *'}] # 9:00am Lagos = 7:00am UTC
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - run: pip install moviepy
-      - run: python build.py
+      
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick libmagickcore-6.q16-6-extra
+          pip install moviepy
+      
+      - name: Run builder
+        run: python build.py
+      
       - uses: actions/upload-artifact@v4
         with: {name: daily-video, path: out/*.mp4}
