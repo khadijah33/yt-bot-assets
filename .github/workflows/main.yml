@@ -1,7 +1,7 @@
 name: Build Daily Video
 on:
   schedule:
-    - cron: "0 8 * * *"   # 5 stars now. 7am UTC = 9am Lagos
+    - cron: "0 8 * * *"
   workflow_dispatch:
 jobs:
   build:
@@ -12,7 +12,10 @@ jobs:
         with: {python-version: '3.11'}
       - name: Install ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
-      - run: pip install pillow
+      - run: pip install pillow requests
       - run: python build.py
+        env:
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
       - uses: actions/upload-artifact@v4
         with: {name: daily-video, path: out/*.mp4}
