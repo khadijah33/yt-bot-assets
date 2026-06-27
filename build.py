@@ -1,28 +1,40 @@
-import os, datetime
-from PIL import Image, ImageDraw, ImageFont
+import os, json, subprocess, datetime
+from bot import topic, script, job
 
-OUT_DIR = "out"
-os.makedirs(OUT_DIR, exist_ok=True)
+# Use your existing bot system
+job()
 
-W, H, FPS = 1080, 1920, 1 # 1 fps is fine for slides
-DURATION = 600 # 10 minutes = 600 seconds
-SECONDS_PER_SLIDE = 1
+# Get the generated files
+d = datetime.date.today().isoformat()
+p = f"output/{d}"
 
-img = Image.new('RGB', (W, H), color=(0,0,0))
-draw = ImageDraw.Draw(img)
-font = ImageFont.load_default()
+# Read the audio and metadata
+with open(f"{p}/VOICE.mp3", "rb") as audio:
+    audio_data = audio.read()
 
-for i in range(0, DURATION, SECONDS_PER_SLIDE):
-    txt = f"Daily Video {datetime.date.today()}\nSlide {i//10 + 1}"
-    draw.rectangle([(0,0),(W,H)], fill=(0,0,0))
-    draw.text((W//2, H//2), txt, font=font, fill=(255,255,255), anchor="mm")
-    img.save(f"{OUT_DIR}/frame_{i:04d}.png")
+out_path = f"out/video_{d}.mp4"
+os.makedirs("out", exist_ok=True)
 
-# Make video from images. No ImageMagick needed.
-import subprocess
-out_path = os.path.join(OUT_DIR, f"video_{datetime.date.today()}.mp4")
-subprocess.run([
-    "ffmpeg", "-framerate", "1", "-i", f"{OUT_DIR}/frame_%04d.png", 
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", "30", out_path
-], check=True)
+# Combine audio (you have) with simple video
+subprocess.run(["ffmpeg", "-f", "lavfi", "-i", "color=c=black:s=1080x1920:d=600", "-i", f"{p}/VOICE.mp3", "-c:v", "libx264", "-c:a", "aac", "-y", out_path], check=True)
+
 print(f"Made {out_path}")
+
+# Upload
+import requests, os
+REFRESH_TOKEN = os.getenv('YOUTUBE_REFRESH_TOKEN')
+if REFRESH_TOKEN:
+    with open(f"{p}/TITLE.txt") as f: title = f.read().strip()
+    r = requests.post('https://oauth2.googleapis.com/token', data={
+        'client_id': '1095280161816-e91th9rqian0qvc3qdsa0ulloefurpe5.apps.googleusercontent.com',
+        'client_secret': os.getenv('YOUTUBE_CLIENT_SECRET'),
+        'refresh_token': REFRESH_TOKEN,
+        'grant_type': 'refresh_token'
+    })
+    access_token = r.json().get('access_token')
+    if access_token:
+        with open(out_path, 'rb') as f:
+            requests.post('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status',
+                headers={'Authorization': f'Bearer {access_token}'},
+                json={'snippet': {'title': title, 'description': 'Daily tech insights', 'categoryId': '27'}, 'status': {'privacyStatus': 'unlisted'}},
+                files={'video': f})
