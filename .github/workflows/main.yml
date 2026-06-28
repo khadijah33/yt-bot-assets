@@ -1,7 +1,9 @@
 name: Build Daily Video
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "15 8 * * *"
+    - cron: "45 8 * * *"
+    - cron: "30 9 * * *"
   workflow_dispatch:
 jobs:
   build:
@@ -12,7 +14,7 @@ jobs:
         with: {python-version: '3.11'}
       - name: Install ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
-      - run: pip install pillow requests
+      - run: pip install pillow requests gtts
       - run: python build.py
         env:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
